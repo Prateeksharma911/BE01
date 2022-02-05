@@ -6,6 +6,7 @@ use App\Entity\Todo;
 use App\Form\TodoType;
 use App\Repository\TodoRepository;
 use ContainerDDtYuU0\getDoctrine_UlidGeneratorService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -13,6 +14,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 
 class TodoController extends AbstractController
 {
@@ -45,18 +48,23 @@ class TodoController extends AbstractController
     /**
      * @Route("/todo/{id}", name="get_one_todo", methods={"GET"})
      */
-    public function get($id): JsonResponse
+    public function get($id , EntityManagerInterface $entityManager , CacheInterface $todocache): JsonResponse
     {
-        $todo = $this->todoRepository->findOneBy(['id' => $id]);
+        $todo = $todocache->get($id , function(ItemInterface $item) use ($id ,$entityManager){
+            $item->expiresAt(date_create('tomorrow'));
 
-        $data = [
-            'id' => $todo->getId(),
-            'title' => $todo->getTitle(),
-            'details' => $todo->getDetails(),
+            $todo = $this->todoRepository->findOneBy(['id' => $id]);
 
-        ];
+            $data = [
+                    'id' => $todo->getId(),
+                    'title' => $todo->getTitle(),
+                    'details' => $todo->getDetails(),
+                
+                ];
+            return $data;
+        });
 
-        return new JsonResponse($data, Response::HTTP_OK);
+        return new JsonResponse($todo, Response::HTTP_OK);
     }
 
 
