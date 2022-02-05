@@ -61,7 +61,7 @@ class TodoController extends AbstractController
 
 
     /**
-     * @Route("/todoall", name="get_one_todo", methods={"GET"})
+     * @Route("/todoall", name="get_all_todo", methods={"GET"})
      */
     public function getall(Request $request): Response
     {
